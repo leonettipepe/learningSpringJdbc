@@ -11,6 +11,8 @@ import java.util.Map;
 public interface MP3Dao {
     int insert(MP3 mp3);
 
+    void insertBatch(List<MP3> list);
+
     void delete(MP3 mp3);
 
     MP3 getMP3ById(int id);

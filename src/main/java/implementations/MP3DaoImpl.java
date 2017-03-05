@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,25 +30,49 @@ import java.util.Map;
 @Component("dao")
 public class MP3DaoImpl implements MP3Dao {
 
+    private SimpleJdbcInsert simpleJdbcInsert;
     private NamedParameterJdbcTemplate jdbcTemplate;
 
     public MP3DaoImpl(DataSource dataSource) {
+        simpleJdbcInsert = new SimpleJdbcInsert(dataSource);
+        simpleJdbcInsert.setTableName("mp3");
+        simpleJdbcInsert.setColumnNames(Arrays.asList(new String[] {"author", "name"}));
          jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
 
-    public int insert(final MP3 mp3) {
-        final String sql = "INSERT into mp3 (name, author) VALUES (?, ?)";
-        KeyHolder key = new GeneratedKeyHolder();
-       // jdbcTemplate.update(sql, new Object[] {mp3.getName(), mp3.getAuthor()});
-        jdbcTemplate.getJdbcOperations().update(new PreparedStatementCreator() {
-            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement statement = con.prepareStatement(sql);
-                statement.setString(1, mp3.getName());
-                statement.setString(2, mp3.getAuthor());
-                return statement;
-            }
-        }, key);
-        return key.getKey().intValue();
+//    public int insert(final MP3 mp3) {
+//        final String sql = "INSERT into mp3 (name, author) VALUES (?, ?)";
+//        KeyHolder key = new GeneratedKeyHolder();
+//       // jdbcTemplate.update(sql, new Object[] {mp3.getName(), mp3.getAuthor()});
+//        jdbcTemplate.getJdbcOperations().update(new PreparedStatementCreator() {
+//            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+//                PreparedStatement statement = con.prepareStatement(sql);
+//                statement.setString(1, mp3.getName());
+//                statement.setString(2, mp3.getAuthor());
+//                return statement;
+//            }
+//        }, key);
+//        return key.getKey().intValue();
+//    }
+
+
+    public int insert(MP3 mp3) {
+        MapSqlParameterSource source = new MapSqlParameterSource();
+        source.addValue("author", mp3.getAuthor());
+        source.addValue("name", mp3.getName());
+        simpleJdbcInsert.execute(source);
+        return 0;
+    }
+
+    public void insertBatch(List<MP3> list) {
+        MapSqlParameterSource[] source = new MapSqlParameterSource[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            MapSqlParameterSource putting = new MapSqlParameterSource();
+            putting.addValue("author", list.get(i).getAuthor());
+            putting.addValue("name", list.get(i).getName());
+            source[i] = putting;
+        }
+        simpleJdbcInsert.executeBatch(source);
     }
 
     public void delete(MP3 mp3) {
