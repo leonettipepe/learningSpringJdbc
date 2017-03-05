@@ -14,10 +14,13 @@ public class Test {
         MP3Dao dao = (MP3Dao) ctx.getBean("dao");
         MP3 obj = new MP3();
         obj.setAuthor("Justin Bieber");
-        obj.setName("Armbar");
-        System.out.println(dao.insert(obj));
+        obj.setName("Leglock");
+        //System.out.println(dao.insert(obj));
 //        for (Map.Entry<String, Integer> pair : dao.getStat().entrySet()) {
 //            System.out.println(pair.getKey() + " - " + pair.getValue());
 //        }
+        for (MP3 kaka : dao.getMP3ListByName("Leglock")) {
+            System.out.println(kaka.getAuthor() + " - " + kaka.getName());
+        }
     }
 }
