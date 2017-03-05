@@ -35,7 +35,7 @@ public class MP3DaoImpl implements MP3Dao {
         final String sql = "INSERT into mp3 (name, author) VALUES (?, ?)";
         KeyHolder key = new GeneratedKeyHolder();
        // jdbcTemplate.update(sql, new Object[] {mp3.getName(), mp3.getAuthor()});
-        return jdbcTemplate.update(new PreparedStatementCreator() {
+        jdbcTemplate.update(new PreparedStatementCreator() {
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                 PreparedStatement statement = con.prepareStatement(sql);
                 statement.setString(1, mp3.getName());
@@ -43,6 +43,7 @@ public class MP3DaoImpl implements MP3Dao {
                 return statement;
             }
         }, key);
+        return key.getKey().intValue();
     }
 
     public void delete(MP3 mp3) {
