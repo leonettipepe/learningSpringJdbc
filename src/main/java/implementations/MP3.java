@@ -1,6 +1,8 @@
 package implementations;
 
 
+import java.util.Map;
+
 /**
  * Created by leonid on 03.03.2017.
  */
@@ -24,4 +26,6 @@ public class MP3 {
     public void setAuthor(String author) {
         this.author = author;
     }
+
+
 }
