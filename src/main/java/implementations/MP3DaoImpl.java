@@ -30,6 +30,9 @@ import java.util.Map;
 @Component("dao")
 public class MP3DaoImpl implements MP3Dao {
 
+    private static final String mp3Table = "mp3";
+    private static final String mp3View = "mp3_view";
+
     private SimpleJdbcInsert simpleJdbcInsert;
     private NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -37,30 +40,23 @@ public class MP3DaoImpl implements MP3Dao {
         simpleJdbcInsert = new SimpleJdbcInsert(dataSource);
         simpleJdbcInsert.setTableName("mp3");
         simpleJdbcInsert.setColumnNames(Arrays.asList(new String[] {"author", "name"}));
-         jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+        jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
 
-//    public int insert(final MP3 mp3) {
-//        final String sql = "INSERT into mp3 (name, author) VALUES (?, ?)";
-//        KeyHolder key = new GeneratedKeyHolder();
-//       // jdbcTemplate.update(sql, new Object[] {mp3.getName(), mp3.getAuthor()});
-//        jdbcTemplate.getJdbcOperations().update(new PreparedStatementCreator() {
-//            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-//                PreparedStatement statement = con.prepareStatement(sql);
-//                statement.setString(1, mp3.getName());
-//                statement.setString(2, mp3.getAuthor());
-//                return statement;
-//            }
-//        }, key);
-//        return key.getKey().intValue();
-//    }
-
-
     public int insert(MP3 mp3) {
-        MapSqlParameterSource source = new MapSqlParameterSource();
-        source.addValue("author", mp3.getAuthor());
-        source.addValue("name", mp3.getName());
-        simpleJdbcInsert.execute(source);
+        Author author = mp3.getAuthor();
+        String insertingAuthor = "INSERT INTO author (author) values (:author)";
+        MapSqlParameterSource paramsAuthor = new MapSqlParameterSource();
+        paramsAuthor.addValue("author", author.getName());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(insertingAuthor, paramsAuthor, keyHolder);
+        System.out.println(keyHolder.getKey().intValue());
+
+        String insertingMP3 = "INSERT INTO mp3 (author_id, name) values (:author_id, :name)";
+        MapSqlParameterSource paramsMP3 = new MapSqlParameterSource();
+        paramsMP3.addValue("author_id", keyHolder.getKey().intValue());
+        paramsMP3.addValue("name", mp3.getName());
+        jdbcTemplate.update(insertingMP3, paramsMP3);
         return 0;
     }
 
@@ -85,33 +81,37 @@ public class MP3DaoImpl implements MP3Dao {
     }
 
     public MP3 getMP3ById(int id) {
-        String sql = "SELECT * FROM mp3 WHERE id = :id";
-        MapSqlParameterSource source = new MapSqlParameterSource();
-        source.addValue("id", id);
-        return jdbcTemplate.queryForObject(sql, source, new MP3RowMapper());
+        String sql = "select * from " + mp3View + " where mp3_id=:mp3_id";
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("mp3_id", id);
+
+        return jdbcTemplate.queryForObject(sql, params, new MP3RowMapper());
     }
 
     public List<MP3> getMP3ListByName(String name) {
-        String sql = "SELECT * FROM mp3 WHERE name = :name";
+        String sql = "select * from " + mp3View + " where upper(mp3_name) LIKE :mp3_name";
         MapSqlParameterSource source = new MapSqlParameterSource();
-        source.addValue("name", name);
+        source.addValue("mp3_name", "%" + name.toUpperCase() + "%");
         return jdbcTemplate.query(sql, source, new MP3RowMapper());
     }
 
     public List<MP3> getMP3ListByAuthor(String author) {
-        String sql = "SELECT * FROM mp3 WHERE author = :author";
-        MapSqlParameterSource source = new MapSqlParameterSource();
-        source.addValue("author", author);
-        return jdbcTemplate.query(sql, source, new MP3RowMapper());
+        String sql = "select * from " + mp3View + " where upper(author_name) like :author_name";
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("author_name", "%" + author.toUpperCase() + "%");
+
+        return jdbcTemplate.query(sql, params, new MP3RowMapper());
     }
 
     public Map<String, Integer> getStat() {
-        String sql = "SELECT author, count (*) as count from mp3 group by author";
+        String sql = "SELECT author_name, count (*) as count from mp3_view group by author_name";
         return jdbcTemplate.query(sql, new ResultSetExtractor<Map<String, Integer>>() {
             public Map<String, Integer> extractData(ResultSet resultSet) throws SQLException, DataAccessException {
                 Map<String, Integer> map = new HashMap<String, Integer>();
                 while (resultSet.next()) {
-                    map.put( (String) resultSet.getObject("author"),  resultSet.getInt("count"));
+                    map.put( (String) resultSet.getObject("author_name"),  resultSet.getInt("count"));
                 }
                 return map;
             }
@@ -120,9 +120,12 @@ public class MP3DaoImpl implements MP3Dao {
 
     private static final class MP3RowMapper implements RowMapper<MP3> {
         public MP3 mapRow(ResultSet resultSet, int i) throws SQLException {
+            Author author = new Author();
+            author.setName((String)resultSet.getObject("author_name"));
+            author.setId(resultSet.getInt("author_id"));
             MP3 obj = new MP3();
-            obj.setAuthor((String)resultSet.getObject("author"));
-            obj.setName((String) resultSet.getObject("name"));
+            obj.setAuthor((author));
+            obj.setName((String) resultSet.getObject("mp3_name"));
             return obj;
         }
     }

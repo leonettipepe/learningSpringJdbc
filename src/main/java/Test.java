@@ -1,3 +1,4 @@
+import implementations.Author;
 import implementations.MP3;
 import interfaces.MP3Dao;
 import org.springframework.context.ApplicationContext;
@@ -15,18 +16,19 @@ public class Test {
         ApplicationContext ctx = new ClassPathXmlApplicationContext("spring.xml");
         MP3Dao dao = (MP3Dao) ctx.getBean("dao");
         MP3 obj = new MP3();
-        obj.setAuthor("Lady gaga");
+        Author author = new Author();
+        author.setName("Lady Gaga");
         obj.setName("Poker face");
-        MP3 obj2 = new MP3();
-        obj2.setAuthor("rihanna");
-        obj2.setName("Diamond");
-        //System.out.println(dao.insert(obj));
+        obj.setAuthor(author);
+        System.out.println(dao.insert(obj));
+
 //        for (Map.Entry<String, Integer> pair : dao.getStat().entrySet()) {
 //            System.out.println(pair.getKey() + " - " + pair.getValue());
 //        }
-//        for (MP3 kaka : dao.getMP3ListByName("Leglock")) {
-//            System.out.println(kaka.getAuthor() + " - " + kaka.getName());
-//        }
-        dao.insertBatch(Arrays.asList(new MP3[]{obj, obj2}));
+
+        for (MP3 kaka : dao.getMP3ListByName("Sunrise")) {
+            System.out.println(kaka.getAuthor() + " - " + kaka.getName());
+        }
+       // dao.insertBatch(Arrays.asList(new MP3[]{obj, obj2}));
     }
 }
